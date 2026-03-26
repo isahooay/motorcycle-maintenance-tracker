@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>機車保養進度表</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --card-2: #1f2937;
+      --line: #334155;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-2: #38bdf8;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b1220, #111827 45%, #0f172a);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(56,189,248,.12));
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: rgba(17,24,39,.96);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2, .card h3 {
+      margin-top: 0;
+    }
+
+    .muted { color: var(--muted); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea { min-height: 88px; resize: vertical; }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .08s ease, opacity .2s ease;
+    }
+
+    button:hover { opacity: .95; }
+    button:active { transform: scale(.98); }
+
+    .btn-primary { background: var(--accent); color: #052e16; }
+    .btn-secondary { background: var(--accent-2); color: #082f49; }
+    .btn-ghost { background: #1e293b; color: var(--text); border: 1px solid var(--line); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    .stat {
+      background: linear-gradient(180deg, rgba(30,41,59,.9), rgba(15,23,42,.95));
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat .label { color: var(--muted); font-size: 13px; }
+    .stat .value { font-size: 28px; font-weight: 800; margin-top: 6px; }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .task {
+      background: var(--card-2);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .task-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .task-name {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-block;
+    }
+
+    .ok { background: rgba(34,197,94,.18); color: #86efac; }
+    .soon { background: rgba(245,158,11,.18); color: #fcd34d; }
+    .late { background: rgba(239,68,68,.18); color: #fca5a5; }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: #0f172a;
+      overflow: hidden;
+      border: 1px solid rgba(148,163,184,.12);
+      margin: 10px 0 8px;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width .3s ease;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+    }
+
+    .bar.soon { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .bar.late { background: linear-gradient(90deg, #ef4444, #fb7185); }
+
+    .task-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 700px) {
+      .task-meta { grid-template-columns: 1fr; }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th { color: var(--muted); font-weight: 700; }
+    tr:hover td { background: rgba(30,41,59,.45); }
+
+    .small { font-size: 12px; color: var(--muted); }
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+      border: 1px dashed rgba(148,163,184,.25);
+      border-radius: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>🏍️ 機車保養進度表</h1>
+      <p>記錄目前里程、保養項目、上次保養時間與費用，自動幫你判斷：正常、快到了、已超過。資料會存在瀏覽器本機，不用帳號也能用。</p>
+    </section>
+
+    <div class="grid grid-2">
+      <section class="card">
+        <h2>車輛資訊</h2>
+        <div class="form-grid">
+          <div>
+            <label for="bikeName">車種 / 名稱</label>
+            <input id="bikeName" placeholder="例如：KYMCO ST250" />
+          </div>
+          <div>
+            <label for="plate">車牌 / 備註</label>
+            <input id="plate" placeholder="例如：ABC-1234" />
+          </div>
+          <div>
+            <label for="currentMileage">目前總里程 (km)</label>
+            <input id="currentMileage" type="number" min="0" placeholder="例如：15230" />
+          </div>
+          <div>
+            <label for="todayDate">今天日期</label>
+            <input id="todayDate" type="date" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="saveProfile()">儲存車輛資訊</button>
+          <button class="btn-ghost" onclick="loadDemo()">載入範例</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>總覽</h2>
+        <div class="grid grid-3">
+          <div class="stat">
+            <div class="label">保養項目數</div>
+            <div class="value" id="statTotal">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">快到了</div>
+            <div class="value" id="statSoon">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">已超過</div>
+            <div class="value" id="statLate">0</div>
+          </div>
+        </div>
+        <div style="margin-top:14px" class="small">建議常用項目：機油、齒輪油、空濾、火星塞、煞車皮、輪胎、皮帶、冷卻液、電瓶。</div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>新增 / 編輯保養項目</h2>
+      <div class="form-grid">
+        <div>
+          <label for="itemName">保養項目</label>
+          <input id="itemName" placeholder="例如：機油" />
+        </div>
+        <div>
+          <label for="intervalKm">保養週期 (公里)</label>
+          <input id="intervalKm" type="number" min="0" placeholder="例如：1000" />
+        </div>
+        <div>
+          <label for="lastMileage">上次保養里程 (km)</label>
+          <input id="lastMileage" type="number" min="0" placeholder="例如：14500" />
+        </div>
+        <div>
+          <label for="lastDate">上次保養日期</label>
+          <input id="lastDate" type="date" />
+        </div>
+        <div>
+          <label for="cost">費用 (NT$)</label>
+          <input id="cost" type="number" min="0" placeholder="例如：450" />
+        </div>
+        <div>
+          <label for="shop">保養店家</label>
+          <input id="shop" placeholder="例如：XX機車行" />
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label for="notes">備註</label>
+        <textarea id="notes" placeholder="例如：換 10W40、檢查胎壓、前煞稍薄"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveItem()">新增保養項目</button>
+        <button class="btn-ghost" onclick="resetForm()">清空欄位</button>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+        <h2 style="margin:0;">保養進度</h2>
+        <div class="btn-row" style="margin-top:0;">
+          <button class="btn-ghost" onclick="exportData()">匯出資料</button>
+          <button class="btn-ghost" onclick="document.getElementById('importFile').click()">匯入資料</button>
+          <button class="btn-danger" onclick="clearAllData()">清空全部資料</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)" />
+        </div>
+      </div>
+      <div id="taskList" class="task-list"></div>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>保養紀錄總表</h2>
+      <div id="historyWrap"></div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'motorcycle_maintenance_tracker_v1';
+    let editId = null;
+
+    function getData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {
+        profile: { bikeName: '', plate: '', currentMileage: '', todayDate: todayStr() },
+        items: []
+      };
+    }
+
+    function setData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function todayStr() {
+      const d = new Date();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    function saveProfile() {
+      const data = getData();
+      data.profile = {
+        bikeName: document.getElementById('bikeName').value.trim(),
+        plate: document.getElementById('plate').value.trim(),
+        currentMileage: Number(document.getElementById('currentMileage').value || 0),
+        todayDate: document.getElementById('todayDate').value || todayStr()
+      };
+      setData(data);
+      render();
+      alert('車輛資訊已儲存');
+    }
+
+    function saveItem() {
+      const name = document.getElementById('itemName').value.trim();
+      const intervalKm = Number(document.getElementById('intervalKm').value || 0);
+      const lastMileage = Number(document.getElementById('lastMileage').value || 0);
+      const lastDate = document.getElementById('lastDate').value || '';
+      const cost = Number(document.getElementById('cost').value || 0);
+      const shop = document.getElementById('shop').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+
+      if (!name) return alert('請輸入保養項目');
+      if (!intervalKm) return alert('請輸入保養週期公里數');
+
+      const data = getData();
+      const item = {
+        id: editId || `id_${Date.now()}`,
+        name,
+        intervalKm,
+        lastMileage,
+        lastDate,
+        cost,
+        shop,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+
+      if (editId) {
+        data.items = data.items.map(x => x.id === editId ? item : x);
+        editId = null;
+        document.querySelector('.btn-primary').textContent = '新增保養項目';
+      } else {
+        data.items.push(item);
+      }
+
+      setData(data);
+      resetForm();
+      render();
+    }
+
+    function resetForm() {
+      ['itemName','intervalKm','lastMileage','lastDate','cost','shop','notes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      editId = null;
+      document.querySelector('.btn-primary').textContent = '新增保養項目';
+    }
+
+    function editItem(id) {
+      const data = getData();
+      const item = data.items.find(x => x.id === id);
+      if (!item) return;
+
+      editId = id;
+      document.getElementById('itemName').value = item.name || '';
+      document.getElementById('intervalKm').value = item.intervalKm || '';
+      document.getElementById('lastMileage').value = item.lastMileage || '';
+      document.getElementById('lastDate').value = item.lastDate || '';
+      document.getElementById('cost').value = item.cost || '';
+      document.getElementById('shop').value = item.shop || '';
+      document.getElementById('notes').value = item.notes || '';
+      document.querySelector('.btn-primary').textContent = '更新保養項目';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+      if (!confirm('確定要刪除這筆保養項目？')) return;
+      const data = getData();
+      data.items = data.items.filter(x => x.id !== id);
+      setData(data);
+      render();
+    }
+
+    function calcStatus(item, currentMileage) {
+      const used = Math.max(0, currentMileage - Number(item.lastMileage || 0));
+      const pctRaw = item.intervalKm > 0 ? (used / item.intervalKm) * 100 : 0;
+      const pct = Math.min(100, Math.max(0, pctRaw));
+      const left = Number(item.intervalKm || 0) - used;
+
+      let status = 'ok';
+      let text = '正常';
+      if (used >= item.intervalKm) {
+        status = 'late';
+        text = '已超過';
+      } else if (pctRaw >= 80) {
+        status = 'soon';
+        text = '快到了';
+      }
+
+      return { used, pct, left, status, text, pctRaw };
+    }
+
+    function render() {
+      const data = getData();
+      const profile = data.profile || {};
+
+      document.getElementById('bikeName').value = profile.bikeName || '';
+      document.getElementById('plate').value = profile.plate || '';
+      document.getElementById('currentMileage').value = profile.currentMileage ?? '';
+      document.getElementById('todayDate').value = profile.todayDate || todayStr();
+
+      const currentMileage = Number(profile.currentMileage || 0);
+      const taskList = document.getElementById('taskList');
+      const historyWrap = document.getElementById('historyWrap');
+
+      const items = [...(data.items || [])].sort((a, b) => {
+        const aa = calcStatus(a, currentMileage);
+        const bb = calcStatus(b, currentMileage);
+        const order = { late: 0, soon: 1, ok: 2 };
+        return order[aa.status] - order[bb.status];
+      });
+
+      let soonCount = 0;
+      let lateCount = 0;
+
+      if (!items.length) {
+        taskList.innerHTML = '<div class="empty">還沒有保養項目，先新增一筆吧。</div>';
+        historyWrap.innerHTML = '<div class="empty">目前沒有紀錄。</div>';
+      } else {
+        taskList.innerHTML = items.map(item => {
+          const s = calcStatus(item, currentMileage);
+          if (s.status === 'soon') soonCount++;
+          if (s.status === 'late') lateCount++;
+
+          const barClass = s.status === 'late' ? 'late' : s.status === 'soon' ? 'soon' : '';
+          const remainText = s.left >= 0 ? `剩餘 ${s.left} km` : `超過 ${Math.abs(s.left)} km`;
+
+          return `
+            <div class="task">
+              <div class="task-top">
+                <div class="task-name">${escapeHtml(item.name)}</div>
+                <div class="badge ${s.status === 'late' ? 'late' : s.status === 'soon' ? 'soon' : 'ok'}">${s.text}</div>
+              </div>
+              <div class="progress"><div class="bar ${barClass}" style="width:${Math.min(100, s.pct)}%"></div></div>
+              <div class="task-meta">
+                <div>
+                  <div>上次保養里程：<strong>${num(item.lastMileage)} km</strong></div>
+                  <div>保養週期：<strong>${num(item.intervalKm)} km</strong></div>
+                  <div>目前狀態：<strong>${remainText}</strong></div>
+                </div>
+                <div>
+                  <div>上次日期：<strong>${item.lastDate || '-'}</strong></div>
+                  <div>費用：<strong>${item.cost ? 'NT$ ' + num(item.cost) : '-'}</strong></div>
+                  <div>店家：<strong>${escapeHtml(item.shop || '-')}</strong></div>
+                </div>
+              </div>
+              <div class="small" style="margin-top:8px;">備註：${escapeHtml(item.notes || '-')}</div>
+              <div class="btn-row">
+                <button class="btn-ghost" onclick="editItem('${item.id}')">編輯</button>
+                <button class="btn-danger" onclick="deleteItem('${item.id}')">刪除</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        historyWrap.innerHTML = `
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th>週期(km)</th>
+                  <th>上次里程</th>
+                  <th>上次日期</th>
+                  <th>費用</th>
+                  <th>店家</th>
+                  <th>備註</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(item => `
+                  <tr>
+                    <td>${escapeHtml(item.name)}</td>
+                    <td>${num(item.intervalKm)}</td>
+                    <td>${num(item.lastMileage)}</td>
+                    <td>${item.lastDate || '-'}</td>
+                    <td>${item.cost ? 'NT$ ' + num(item.cost) : '-'}</td>
+                    <td>${escapeHtml(item.shop || '-')}</td>
+                    <td>${escapeHtml(item.notes || '-')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      document.getElementById('statTotal').textContent = items.length;
+      document.getElementById('statSoon').textContent = soonCount;
+      document.getElementById('statLate').textContent = lateCount;
+    }
+
+    function num(v) {
+      return Number(v || 0).toLocaleString('zh-TW');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function exportData() {
+      const data = getData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '機車保養進度資料.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data || !Array.isArray(data.items)) throw new Error('格式錯誤');
+          setData(data);
+          render();
+          alert('匯入成功');
+        } catch (err) {
+          alert('匯入失敗，請確認 JSON 格式正確');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearAllData() {
+      if (!confirm('確定要清空全部資料？這個動作不能復原。')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      resetForm();
+      render();
+    }
+
+    function loadDemo() {
+      const demo = {
+        profile: {
+          bikeName: 'KYMCO ST250',
+          plate: '測試用',
+          currentMileage: 15230,
+          todayDate: todayStr()
+        },
+        items: [
+          {
+            id: 'demo1',
+            name: '機油',
+            intervalKm: 1000,
+            lastMileage: 14500,
+            lastDate: '2026-03-01',
+            cost: 450,
+            shop: '阿宏機車行',
+            notes: '10W40',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'demo2',
+            name: '齒輪油',
+            intervalKm: 2000,
+            lastMileage: 14000,
+            lastDate: '2026-02-15',
+            cost: 120,
+            shop: '阿宏機車行',
+            notes: '順便檢查漏油',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'demo3',
+            name: '空氣濾芯',
+            intervalKm: 5000,
+            lastMileage: 11000,
+            lastDate: '2025-12-20',
+            cost: 280,
+            shop: '原廠',
+            notes: '下次可一起檢查火星塞',
+            createdAt: new Date().toISOString()
+          }
+        ]
+      };
+      setData(demo);
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
